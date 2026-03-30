@@ -4,6 +4,10 @@
 credentials.json
 token.json
 session/
+platinum/CREDENTIALS_SETUP.md
+platinum/DEPLOYMENT_GUIDE.md
+platinum/cloud_agent/config.py
+platinum/local_agent/config.py
 
 # Python
 __pycache__/
