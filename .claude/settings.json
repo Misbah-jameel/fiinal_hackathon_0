@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "email": {
+      "command": "node",
+      "args": ["D:/fiinal_hackathon_0/mcp/email-server/index.js"],
+      "env": {
+        "GMAIL_CREDENTIALS": "D:/fiinal_hackathon_0/credentials.json",
+        "GMAIL_TOKEN": "D:/fiinal_hackathon_0/token.json",
+        "VAULT_PATH": "D:/fiinal_hackathon_0/AI_Employee_Vault",
+        "DRY_RUN": "true"
+      }
+    },
+    "odoo": {
+      "command": "node",
+      "args": ["D:/fiinal_hackathon_0/mcp/odoo-server/index.js"],
+      "env": {
+        "ODOO_URL": "http://localhost:8069",
+        "ODOO_DB": "ai_employee",
+        "ODOO_USER": "admin",
+        "ODOO_PASSWORD": "admin",
+        "VAULT_PATH": "D:/fiinal_hackathon_0/AI_Employee_Vault"
+      }
+    },
+    "social": {
+      "command": "node",
+      "args": ["D:/fiinal_hackathon_0/mcp/social-server/index.js"],
+      "env": {
+        "FACEBOOK_ACCESS_TOKEN": "EAALbZB9C9WHwBRFGZAMsCShZByHACizvqyQVOy9BzD540iV5ZC0xnFlrwF4wP5VbRINW6AZAGXjTenGFFy8SxSmnefj7ZC014xmEvO3tHLVbIdZBMJkAw6uGnBZCYdkyyX5pl1mIvoSMkQP8UB8ZAcjcgeHvqmuVe7aGwqqf9gjS51tkZBLVW6lr9RgZAN7lHZCTIzvynUQ4MMwxCgpgtaaGAgEXYDrlciNzuX0MFnWt4IZAhksSQZC3KWVMZBNO40EhMVFE2DG7oxupwmytSiNmHyL1WU4h8S6",
+        "FACEBOOK_PAGE_ID": "",
+        "INSTAGRAM_ACCESS_TOKEN": "EAALbZB9C9WHwBRFGZAMsCShZByHACizvqyQVOy9BzD540iV5ZC0xnFlrwF4wP5VbRINW6AZAGXjTenGFFy8SxSmnefj7ZC014xmEvO3tHLVbIdZBMJkAw6uGnBZCYdkyyX5pl1mIvoSMkQP8UB8ZAcjcgeHvqmuVe7aGwqqf9gjS51tkZBLVW6lr9RgZAN7lHZCTIzvynUQ4MMwxCgpgtaaGAgEXYDrlciNzuX0MFnWt4IZAhksSQZC3KWVMZBNO40EhMVFE2DG7oxupwmytSiNmHyL1WU4h8S6",
+        "INSTAGRAM_USER_ID": "",
+        "VAULT_PATH": "D:/fiinal_hackathon_0/AI_Employee_Vault",
+        "DRY_RUN": "true"
+      }
+    }
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python D:/fiinal_hackathon_0/hooks/ralph_wiggum.py"
+          }
+        ]
+      }
+    ]
+  }
+}

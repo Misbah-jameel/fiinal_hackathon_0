@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "D:\fiinal_hackathon_0\dashboard\app.py", line 398, in <module>
+    print(f"\n\U0001f916 AI Employee Dashboard Backend")
+  File "C:\Users\hp\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f916' in position 2: character maps to <undefined>

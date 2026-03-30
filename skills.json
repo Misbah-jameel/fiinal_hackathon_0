@@ -1,0 +1,169 @@
+{
+  "skills": {
+    "reasoning-loop": {
+      "description": "Scan /Needs_Action, create Plans, apply Company Handbook rules, route to approval",
+      "command": "python skills/reasoning_loop.py --vault $VAULT_PATH",
+      "category": "core"
+    },
+    "hitl-approval": {
+      "description": "Execute approved actions from /Approved via MCP servers, log, move to /Done",
+      "command": "python skills/hitl_approval.py --vault $VAULT_PATH",
+      "category": "core"
+    },
+    "ceo-briefing": {
+      "description": "Generate Monday Morning CEO Briefing with Odoo revenue data and task metrics",
+      "command": "python skills/ceo_briefing.py --vault $VAULT_PATH",
+      "category": "reporting"
+    },
+    "odoo-get-invoices": {
+      "description": "List invoices from Odoo accounting (filter by state, customer, date)",
+      "command": "claude /odoo-get-invoices",
+      "mcp": "odoo",
+      "category": "accounting"
+    },
+    "odoo-create-invoice": {
+      "description": "Create draft invoice in Odoo (requires human approval before posting)",
+      "command": "claude /odoo-create-invoice",
+      "mcp": "odoo",
+      "category": "accounting"
+    },
+    "odoo-get-balance": {
+      "description": "Get accounting balance: receivables, payables, net position",
+      "command": "claude /odoo-get-balance",
+      "mcp": "odoo",
+      "category": "accounting"
+    },
+    "odoo-get-revenue": {
+      "description": "Get revenue report for date range from Odoo",
+      "command": "claude /odoo-get-revenue",
+      "mcp": "odoo",
+      "category": "accounting"
+    },
+    "odoo-get-customers": {
+      "description": "List customers from Odoo",
+      "command": "claude /odoo-get-customers",
+      "mcp": "odoo",
+      "category": "accounting"
+    },
+    "odoo-list-payments": {
+      "description": "List recent payments received",
+      "command": "claude /odoo-list-payments",
+      "mcp": "odoo",
+      "category": "accounting"
+    },
+    "send-email": {
+      "description": "Draft email → create approval file → send via Email MCP after approval",
+      "command": "claude /send-email",
+      "mcp": "email",
+      "category": "communication"
+    },
+    "linkedin-poster": {
+      "description": "Generate LinkedIn post → approval → publish via LinkedIn API",
+      "command": "python watchers/linkedin_watcher.py --vault $VAULT_PATH --post",
+      "category": "social"
+    },
+    "facebook-poster": {
+      "description": "Generate Facebook post → approval → publish via Graph API",
+      "command": "claude /social_post_facebook",
+      "mcp": "social",
+      "category": "social"
+    },
+    "instagram-poster": {
+      "description": "Generate Instagram post (image required) → approval → publish",
+      "command": "claude /social_post_instagram",
+      "mcp": "social",
+      "category": "social"
+    },
+    "social-get-analytics": {
+      "description": "Get engagement analytics for Facebook and Instagram",
+      "command": "claude /social_get_analytics",
+      "mcp": "social",
+      "category": "social"
+    },
+    "facebook-get-comments": {
+      "description": "Get comments for a specific Facebook post",
+      "command": "claude /social_get_facebook_comments",
+      "mcp": "social",
+      "category": "social"
+    },
+    "facebook-get-insights": {
+      "description": "Get Facebook Page insights and analytics (fans, engagement, reach)",
+      "command": "claude /social_get_facebook_insights",
+      "mcp": "social",
+      "category": "social"
+    },
+    "facebook-delete-post": {
+      "description": "Delete a Facebook post (requires human approval)",
+      "command": "claude /social_delete_facebook_post",
+      "mcp": "social",
+      "category": "social"
+    },
+    "error-recovery": {
+      "description": "Check system health, retry failed operations, manage quarantine",
+      "command": "python skills/error_recovery.py --vault $VAULT_PATH",
+      "category": "system"
+    },
+    "audit-report": {
+      "description": "Generate compliance reports from audit logs",
+      "command": "python skills/audit_logger.py --vault $VAULT_PATH",
+      "category": "reporting"
+    },
+    "gmail-watcher": {
+      "description": "Start/check/diagnose Gmail monitoring daemon",
+      "command": "python watchers/gmail_watcher.py --vault $VAULT_PATH",
+      "category": "watchers"
+    },
+    "linkedin-watcher": {
+      "description": "Start/check LinkedIn notification watcher",
+      "command": "python watchers/linkedin_watcher.py --vault $VAULT_PATH --watch",
+      "category": "watchers"
+    },
+    "facebook-watcher": {
+      "description": "Start/check Facebook and Instagram watcher",
+      "command": "python watchers/facebook_watcher.py --vault $VAULT_PATH --watch",
+      "category": "watchers"
+    },
+    "facebook-status": {
+      "description": "Check Facebook/Instagram watcher status and health",
+      "command": "python watchers/facebook_watcher.py --vault $VAULT_PATH --status",
+      "category": "watchers"
+    },
+    "schedule-task": {
+      "description": "Set up or manage Windows Task Scheduler / PM2 recurring jobs",
+      "command": "python scheduler/setup_scheduler.py",
+      "category": "system"
+    },
+    "health-check": {
+      "description": "Run comprehensive system health check",
+      "command": "python orchestrator.py --vault $VAULT_PATH --once",
+      "category": "system"
+    }
+  },
+  "variables": {
+    "VAULT_PATH": "D:/fiinal_hackathon_0/AI_Employee_Vault"
+  },
+  "workflows": {
+    "process-inbox": {
+      "description": "Process all items in /Needs_Action folder",
+      "steps": [
+        "/reasoning-loop",
+        "/hitl-approval"
+      ]
+    },
+    "weekly-audit": {
+      "description": "Run weekly business audit and generate reports",
+      "steps": [
+        "/ceo-briefing",
+        "/audit-report --report week",
+        "/error-recovery --check"
+      ]
+    },
+    "social-campaign": {
+      "description": "Create and schedule social media campaign for Facebook and Instagram",
+      "steps": [
+        "Generate content with Claude",
+        "/facebook-poster or /instagram-poster"
+      ]
+    }
+  }
+}

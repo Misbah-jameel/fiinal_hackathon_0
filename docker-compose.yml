@@ -1,0 +1,62 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Odoo Community — AI Employee Gold Tier
+#  Run: docker compose up -d
+#  Odoo UI: http://localhost:8069
+#  DB:      ai_employee  |  User: admin  |  Password: admin
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: ai_employee_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_secure_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d ai_employee"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - odoo_net
+
+  odoo:
+    image: odoo:17
+    container_name: ai_employee_odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: odoo
+      PASSWORD: odoo_secure_pass
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - ./odoo/config:/etc/odoo
+      - ./odoo/addons:/mnt/extra-addons
+    networks:
+      - odoo_net
+    command: >
+      odoo
+      --db_host=db
+      --db_port=5432
+      --db_user=odoo
+      --db_password=odoo_secure_pass
+      --log-level=warn
+
+volumes:
+  postgres_data:
+  odoo_data:
+
+networks:
+  odoo_net:
+    driver: bridge

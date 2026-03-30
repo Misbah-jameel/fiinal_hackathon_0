@@ -1,0 +1,21 @@
+# Secrets — NEVER commit these
+.env
+*.env
+credentials.json
+token.json
+session/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs (optional — you may want to commit these for audit)
+# AI_Employee_Vault/Logs/

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Employee Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .header-status { display: flex; gap: 1rem; align-items: center; }
+        .dry-run-badge {
+            background: #f39c12; color: #000;
+            padding: 0.25rem 0.75rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: bold;
+        }
+        .dry-run-badge.active { background: #27ae60; color: #fff; }
+        .refresh-btn {
+            background: rgba(255,255,255,0.2); border: none;
+            color: #fff; padding: 0.5rem 1rem; border-radius: 8px;
+            cursor: pointer; font-size: 0.9rem;
+        }
+        .refresh-btn:hover { background: rgba(255,255,255,0.3); }
+        .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px; padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-card h3 {
+            font-size: 0.85rem; color: rgba(255,255,255,0.7);
+            margin-bottom: 0.5rem; text-transform: uppercase;
+        }
+        .stat-card .value { font-size: 2.5rem; font-weight: bold; }
+        .stat-card.needs-action { border-left: 4px solid #e74c3c; }
+        .stat-card.pending { border-left: 4px solid #f39c12; }
+        .stat-card.approved { border-left: 4px solid #3498db; }
+        .stat-card.done { border-left: 4px solid #27ae60; }
+        .stat-card.audit { border-left: 4px solid #9b59b6; }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem; margin-bottom: 2rem;
+        }
+        @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .panel {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px; padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .panel h2 { font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .watcher-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .watcher-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 1rem; background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        .watcher-status { display: flex; align-items: center; gap: 0.5rem; }
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        .status-dot.online { background: #27ae60; }
+        .status-dot.offline { background: #e74c3c; }
+        .status-dot.unknown { background: #95a5a6; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .approval-list { display: flex; flex-direction: column; gap: 1rem; }
+        .approval-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .approval-item h3 { font-size: 1rem; margin-bottom: 0.5rem; color: #3498db; }
+        .approval-item p {
+            font-size: 0.85rem; color: rgba(255,255,255,0.7);
+            margin-bottom: 1rem; line-height: 1.5;
+        }
+        .approval-actions { display: flex; gap: 0.5rem; }
+        .btn {
+            padding: 0.5rem 1rem; border: none; border-radius: 8px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+        }
+        .btn-approve { background: #27ae60; color: #fff; }
+        .btn-approve:hover { background: #2ecc71; }
+        .btn-reject { background: #e74c3c; color: #fff; }
+        .btn-reject:hover { background: #c0392b; }
+        .btn-view { background: rgba(255,255,255,0.2); color: #fff; }
+        .btn-view:hover { background: rgba(255,255,255,0.3); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .empty-state { text-align: center; padding: 3rem 1rem; color: rgba(255,255,255,0.5); }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .tabs {
+            display: flex; gap: 0.5rem; margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;
+        }
+        .tab {
+            background: transparent; border: none; color: rgba(255,255,255,0.7);
+            padding: 0.5rem 1rem; cursor: pointer; border-radius: 8px 8px 0 0;
+        }
+        .tab.active { background: rgba(255,255,255,0.1); color: #fff; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); display: flex;
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal {
+            background: #1a1a2e; border-radius: 16px; padding: 2rem;
+            max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal h2 { margin-bottom: 1rem; }
+        .modal-content {
+            white-space: pre-wrap; font-family: 'Courier New', monospace;
+            font-size: 0.9rem; line-height: 1.6; color: rgba(255,255,255,0.9);
+            max-height: 60vh; overflow-y: auto;
+        }
+        .modal-close { margin-top: 1rem; width: 100%; }
+        .loading {
+            display: flex; align-items: center; justify-content: center;
+            padding: 3rem; font-size: 1.2rem; color: rgba(255,255,255,0.7);
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #3498db; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-right: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .stat-card.in-progress { border-left: 4px solid #1abc9c; }
+        .stat-card.plans { border-left: 4px solid #e67e22; }
+        .quick-stat { display: flex; justify-content: space-between; padding: 0.5rem 0; }
+        .quick-stat span:last-child { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const API_BASE = '';
+
+        let state = {
+            status: null,
+            approvals: [],
+            needsAction: [],
+            selectedFile: null,
+            activeTab: 'approvals',
+            loading: true
+        };
+
+        async function fetchData() {
+            try {
+                const [statusRes, approvalsRes, needsActionRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/status`),
+                    fetch(`${API_BASE}/api/approvals`),
+                    fetch(`${API_BASE}/api/needs-action`)
+                ]);
+
+                state.status = await statusRes.json();
+                state.approvals = await approvalsRes.json();
+                state.needsAction = await needsActionRes.json();
+                state.loading = false;
+                render();
+            } catch (error) {
+                console.error('Error:', error);
+                state.loading = false;
+                render();
+            }
+        }
+
+        async function handleApprove(fileId) {
+            if (!confirm('Approve this action?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/approve/${fileId}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.error) alert(data.error);
+                else fetchData();
+            } catch (error) {
+                alert('Failed to approve');
+            }
+        }
+
+        async function handleReject(fileId) {
+            if (!confirm('Reject this action?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/reject/${fileId}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.error) alert(data.error);
+                else fetchData();
+            } catch (error) {
+                alert('Failed to reject');
+            }
+        }
+
+        async function viewFile(filename, folder) {
+            try {
+                const res = await fetch(`${API_BASE}/api/file/${folder}/${filename}`);
+                const data = await res.json();
+                if (data.error) alert(data.error);
+                else {
+                    state.selectedFile = data;
+                    render();
+                }
+            } catch (error) {
+                alert('Failed to load file');
+            }
+        }
+
+        function render() {
+            const container = document.getElementById('app');
+            
+            if (state.loading) {
+                container.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading Dashboard...
+                    </div>
+                `;
+                return;
+            }
+
+            const s = state.status || { vault: {}, watchers: {}, audit: {} };
+            const dryRunClass = s.dry_run ? 'active' : '';
+            const dryRunText = s.dry_run ? '🛡️ DRY RUN' : '⚡ LIVE';
+
+            container.innerHTML = `
+                <header class="header">
+                    <h1>🤖 <span>AI Employee Dashboard</span></h1>
+                    <div class="header-status">
+                        <span class="dry-run-badge ${dryRunClass}">${dryRunText}</span>
+                        <button class="refresh-btn" onclick="fetchData()">🔄 Refresh</button>
+                    </div>
+                </header>
+
+                <main class="main-content">
+                    <div class="stats-grid">
+                        <div class="stat-card needs-action">
+                            <h3>Needs Action</h3>
+                            <div class="value">${s.vault.Needs_Action || 0}</div>
+                        </div>
+                        <div class="stat-card pending">
+                            <h3>Pending Approval</h3>
+                            <div class="value">${s.vault.Pending_Approval || 0}</div>
+                        </div>
+                        <div class="stat-card approved">
+                            <h3>Approved</h3>
+                            <div class="value">${s.vault.Approved || 0}</div>
+                        </div>
+                        <div class="stat-card done">
+                            <h3>Done</h3>
+                            <div class="value">${s.vault.Done || 0}</div>
+                        </div>
+                        <div class="stat-card in-progress">
+                            <h3>In Progress</h3>
+                            <div class="value">${s.vault.In_Progress || 0}</div>
+                        </div>
+                        <div class="stat-card plans">
+                            <h3>Plans</h3>
+                            <div class="value">${s.vault.Plans || 0}</div>
+                        </div>
+                        <div class="stat-card audit">
+                            <h3>Audit (Today)</h3>
+                            <div class="value">${s.audit.today || 0}</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="panel">
+                            <div class="tabs">
+                                <button class="tab ${state.activeTab === 'approvals' ? 'active' : ''}" 
+                                    onclick="state.activeTab='approvals'; render()">
+                                    ⏳ Pending Approvals (${state.approvals.length})
+                                </button>
+                                <button class="tab ${state.activeTab === 'needs-action' ? 'active' : ''}"
+                                    onclick="state.activeTab='needs-action'; render()">
+                                    📋 Needs Action (${state.needsAction.length})
+                                </button>
+                            </div>
+
+                            ${state.activeTab === 'approvals' ? renderApprovals() : renderNeedsAction()}
+                        </div>
+
+                        <div>
+                            <div class="panel" style="margin-bottom: 1.5rem">
+                                <h2>🔍 Watcher Health</h2>
+                                <div class="watcher-list">
+                                    ${Object.entries(s.watchers || {}).map(([name, data]) => `
+                                        <div class="watcher-item">
+                                            <span style="text-transform: capitalize">${name}</span>
+                                            <div class="watcher-status">
+                                                <span class="status-dot ${data.status}"></span>
+                                                <span style="font-size: 0.85rem; color: rgba(255,255,255,0.7)">
+                                                    ${data.status}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div class="panel">
+                                <h2>📊 Quick Stats</h2>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem">
+                                    <div class="quick-stat"><span>Inbox</span><span>${s.vault.Inbox || 0}</span></div>
+                                    <div class="quick-stat"><span>In Progress</span><span>${s.vault.In_Progress || 0}</span></div>
+                                    <div class="quick-stat"><span>Plans</span><span>${s.vault.Plans || 0}</span></div>
+                                    <div class="quick-stat"><span>Rejected</span><span>${s.vault.Rejected || 0}</span></div>
+                                    <div class="quick-stat"><span>Total Audit</span><span>${s.audit.total || 0}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                ${state.selectedFile ? renderModal() : ''}
+            `;
+        }
+
+        function renderApprovals() {
+            if (state.approvals.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <p>No pending approvals</p>
+                    </div>
+                `;
+            }
+            return state.approvals.map(item => `
+                <div class="approval-item">
+                    <h3>📄 ${item.filename}</h3>
+                    <p>${item.preview}</p>
+                    <div class="approval-actions">
+                        <button class="btn btn-view" onclick="viewFile('${item.filename}', 'Pending_Approval')">
+                            👁️ View
+                        </button>
+                        <button class="btn btn-approve" ${state.status?.dry_run ? 'disabled' : ''}
+                            onclick="handleApprove('${item.id}')">
+                            ✅ Approve
+                        </button>
+                        <button class="btn btn-reject" ${state.status?.dry_run ? 'disabled' : ''}
+                            onclick="handleReject('${item.id}')">
+                            ❌ Reject
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderNeedsAction() {
+            if (state.needsAction.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎉</div>
+                        <p>All caught up!</p>
+                    </div>
+                `;
+            }
+            return state.needsAction.map(item => `
+                <div class="approval-item">
+                    <h3>📄 ${item.filename}</h3>
+                    <p>${item.preview}</p>
+                    <div class="approval-actions">
+                        <button class="btn btn-view" onclick="viewFile('${item.filename}', 'Needs_Action')">
+                            👁️ View
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderModal() {
+            const f = state.selectedFile;
+            if (!f) return '';
+            return `
+                <div class="modal-overlay" onclick="state.selectedFile=null; render()">
+                    <div class="modal" onclick="event.stopPropagation()">
+                        <h2>📄 ${f.filename}</h2>
+                        <div class="modal-content">${f.content}</div>
+                        <button class="btn btn-view modal-close" onclick="state.selectedFile=null; render()">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize
+        fetchData();
+        setInterval(fetchData, 30000); // Auto-refresh every 30s
+    </script>
+</body>
+</html>

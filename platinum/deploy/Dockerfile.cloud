@@ -1,0 +1,47 @@
+# Cloud Agent Dockerfile
+# Platinum Tier: Always-On Cloud Executive
+
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js for MCP servers
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY platinum/cloud_agent/ ./platinum/cloud_agent/
+COPY platinum/sync/ ./platinum/sync/
+COPY watchers/ ./watchers/
+COPY skills/ ./skills/
+COPY mcp/ ./mcp/
+
+# Create vault directory
+RUN mkdir -p /app/AI_Employee_Vault
+
+# Set volume for persistent vault data
+VOLUME /app/AI_Employee_Vault
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Run Cloud Agent
+CMD ["python", "-m", "platinum.cloud_agent.main", "--git-remote", "${GIT_REMOTE}", "--vault-path", "/app/AI_Employee_Vault"]
